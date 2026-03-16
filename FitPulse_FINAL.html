@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="FitPulse">
+<meta name="theme-color" content="#0A0D14">
+<title>FitPulse</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:rgba(0,229,160,0.15); }
+body { font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif; background:#0A0D14; color:#EFF3FF; min-height:100vh; }
+a,button,div,span { cursor:pointer; }
+
+/* TABS */
+.tab { display:none; padding:16px 16px 90px; }
+.tab.on { display:block; }
+
+/* TOP BAR */
+.topbar { position:sticky; top:0; z-index:99; background:#0D1019; border-bottom:1px solid rgba(255,255,255,0.08); padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+.logo { font-size:22px; font-weight:800; background:linear-gradient(135deg,#00E5A0,#7C6FFF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-0.5px; }
+.streak-pill { background:rgba(255,95,109,0.15); border:1px solid rgba(255,95,109,0.3); border-radius:20px; padding:5px 12px; font-size:13px; font-weight:700; color:#FF5F6D; }
+
+/* BOTTOM NAV */
+.bnav { position:fixed; bottom:0; left:0; right:0; z-index:99; background:#0D1019; border-top:1px solid rgba(255,255,255,0.08); display:flex; padding-bottom:env(safe-area-inset-bottom,0); }
+.bitem { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px 8px; color:#6B7799; font-size:10px; font-weight:500; border:none; background:none; }
+.bitem.on { color:#00E5A0; }
+.bitem svg { width:22px; height:22px; }
+
+/* CARDS */
+.card { background:#1A2135; border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:16px; margin-bottom:12px; }
+.card2 { background:#1E2640; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:12px; margin-bottom:8px; }
+
+/* GRID */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+
+/* HEALTH CARDS */
+.hcard { background:#1A2135; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:14px; text-align:center; }
+.hval { font-size:22px; font-weight:800; }
+.hlbl { font-size:10px; color:#6B7799; margin-top:3px; }
+.bar { height:4px; background:#161C28; border-radius:4px; margin-top:8px; overflow:hidden; }
+.barfill { height:100%; border-radius:4px; transition:width .6s; }
+
+/* COACH */
+.coach { background:linear-gradient(135deg,rgba(124,111,255,0.18),rgba(0,229,160,0.08)); border:1px solid rgba(124,111,255,0.28); border-radius:18px; padding:16px; margin-bottom:12px; }
+.coach-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.coach-av { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#7C6FFF,#00E5A0); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.coach-name { font-weight:700; font-size:15px; }
+.coach-role { font-size:11px; color:#6B7799; }
+.coach-dot { margin-left:auto; width:10px; height:10px; border-radius:50%; background:#00E5A0; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,229,160,.5)} 50%{box-shadow:0 0 0 8px rgba(0,229,160,0)} }
+.coach-msg { font-size:13px; line-height:1.65; }
+
+/* SECTION TITLE */
+.stitle { font-size:16px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+
+/* EXERCISE ROW */
+.exrow { background:#1A2135; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:13px; margin-bottom:9px; display:flex; align-items:center; gap:12px; }
+.exicon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.exname { font-weight:600; font-size:14px; }
+.exmeta { font-size:11px; color:#6B7799; margin-top:2px; }
+.badge { font-size:10px; padding:3px 9px; border-radius:20px; font-weight:700; flex-shrink:0; }
+
+/* WEEK */
+.weekrow { display:flex; gap:7px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; }
+.weekrow::-webkit-scrollbar { display:none; }
+.daypill { min-width:44px; padding:8px 6px; border-radius:12px; text-align:center; flex-shrink:0; }
+.daypill .dn { font-size:9px; color:#6B7799; }
+.daypill .dd { font-size:15px; font-weight:700; margin-top:2px; }
+.daypill .dot { width:5px; height:5px; border-radius:50%; margin:4px auto 0; }
+.daypill.done .dot { background:#00E5A0; }
+.daypill.today { background:#00E5A0; }
+.daypill.today .dn, .daypill.today .dd { color:#000; }
+.daypill.rest { background:#161C28; }
+
+/* STREAK */
+.sgrid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:10px; }
+.sday { aspect-ratio:1; border-radius:5px; background:#161C28; }
+.sday.done { background:#00E5A0; opacity:.8; }
+.sday.today { background:#00E5A0; box-shadow:0 0 8px rgba(0,229,160,.5); }
+.sday.rest { background:rgba(124,111,255,.18); }
+
+/* BUTTONS */
+.btn { background:#00E5A0; color:#000; font-weight:700; font-size:15px; padding:14px; border-radius:16px; border:none; width:100%; margin-top:8px; font-family:inherit; }
+.btnout { background:transparent; color:#00E5A0; font-weight:600; font-size:13px; padding:10px 18px; border-radius:14px; border:1px solid rgba(0,229,160,0.3); font-family:inherit; }
+.btnstart { background:#00E5A0; color:#000; font-weight:700; font-size:13px; padding:9px 16px; border-radius:13px; border:none; font-family:inherit; }
+.btnplay { background:#00E5A0; color:#000; border:none; border-radius:50%; width:28px; height:28px; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* TODAY CARD */
+.todaycard { background:linear-gradient(135deg,rgba(0,229,160,.1),rgba(124,111,255,.07)); border:1px solid rgba(0,229,160,.2); border-radius:18px; padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+
+/* MEAL */
+.mealcard { background:#1A2135; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:center; }
+.mealemoji { font-size:32px; flex-shrink:0; }
+.mealpills { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+.mpill { font-size:10px; padding:2px 8px; border-radius:20px; background:#161C28; color:#6B7799; }
+
+/* PLAN DAY */
+.planday { display:flex; align-items:center; justify-content:space-between; background:#1E2640; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:12px; margin-bottom:8px; }
+
+/* WORKOUT OVERLAY */
+.wolay { display:none; position:fixed; inset:0; background:#0A0D14; z-index:200; overflow-y:auto; padding:20px 20px 40px; }
+.wolay.on { display:block; }
+.wohead { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+.wox { background:#161C28; border:none; color:#6B7799; width:36px; height:36px; border-radius:50%; font-size:18px; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+.wotitle { font-size:20px; font-weight:800; flex:1; }
+.ringwrap { position:relative; width:180px; height:180px; margin:0 auto 24px; }
+.ringwrap svg { width:180px; height:180px; }
+.ringcenter { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.wotime { font-size:44px; font-weight:800; letter-spacing:-2px; line-height:1; }
+.wophase { font-size:12px; color:#6B7799; margin-top:4px; }
+.wolive { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.wolstat { background:#1A2135; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:12px; text-align:center; }
+.wolval { font-size:20px; font-weight:800; }
+.wollbl { font-size:10px; color:#6B7799; margin-top:2px; }
+.wolist { margin-bottom:20px; }
+.woexrow { display:flex; align-items:center; gap:12px; background:#1A2135; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:12px; margin-bottom:8px; transition:all .2s; }
+.woexrow.cur { border-color:#00E5A0; background:rgba(0,229,160,.08); }
+.woexrow.done { opacity:.4; }
+.wonum { width:28px; height:28px; border-radius:50%; background:#161C28; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#6B7799; flex-shrink:0; }
+.woexrow.cur .wonum { background:#00E5A0; color:#000; }
+.woexrow.done .wonum { background:rgba(0,229,160,.2); color:#00E5A0; }
+.wobtns { display:flex; gap:10px; }
+.wobprev { flex:1; background:#161C28; border:1px solid rgba(255,255,255,0.07); color:#EFF3FF; border-radius:14px; padding:14px; font-size:14px; font-weight:600; font-family:inherit; }
+.wobnext { flex:2; background:#00E5A0; border:none; color:#000; border-radius:14px; padding:14px; font-size:14px; font-weight:700; font-family:inherit; }
+
+/* MODAL */
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:300; align-items:flex-end; }
+.modal.on { display:flex; }
+.modbox { background:#101520; border-radius:24px 24px 0 0; padding:20px 20px 40px; width:100%; max-height:85vh; overflow-y:auto; }
+.modhandle { width:36px; height:4px; background:rgba(255,255,255,.15); border-radius:4px; margin:0 auto 16px; }
+.modtitle { font-size:20px; font-weight:800; margin-bottom:14px; }
+
+/* FORM */
+.finput { background:#161C28; border:1px solid rgba(255,255,255,0.07); color:#EFF3FF; border-radius:12px; padding:11px 14px; width:100%; font-family:inherit; font-size:14px; margin-bottom:12px; }
+.finput:focus { outline:none; border-color:#00E5A0; }
+.flabel { font-size:11px; color:#6B7799; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:.5px; }
+
+/* DONE MODAL */
+.donegrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0; }
+.donestat { background:#161C28; border-radius:14px; padding:14px; text-align:center; }
+.donenum { font-size:22px; font-weight:800; }
+
+/* COLORS */
+.cg { color:#00E5A0; } .cr { color:#FF5F6D; } .cp { color:#7C6FFF; } .cb { color:#4FC3F7; } .ca { color:#FFB830; }
+.bg-g { background:rgba(0,229,160,.13); } .bg-r { background:rgba(255,95,109,.13); } .bg-p { background:rgba(124,111,255,.13); } .bg-b { background:rgba(79,195,247,.13); } .bg-a { background:rgba(255,184,48,.13); }
+
+/* SETTINGS */
+.setrow { display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid rgba(255,255,255,0.07); }
+.setlbl { font-size:14px; }
+.setsub { font-size:11px; color:#6B7799; margin-top:2px; }
+.setinput { background:#161C28; border:1px solid rgba(255,255,255,0.07); color:#EFF3FF; border-radius:10px; padding:6px 10px; width:130px; font-family:inherit; font-size:13px; }
+.setnum { background:#161C28; border:1px solid rgba(255,255,255,0.07); color:#EFF3FF; border-radius:10px; padding:6px 10px; width:68px; font-family:inherit; font-size:14px; }
+.toggle { position:relative; width:44px; height:26px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.tslider { position:absolute; inset:0; background:#161C28; border-radius:26px; cursor:pointer; border:1px solid rgba(255,255,255,0.07); transition:.25s; }
+.tslider:before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#555; border-radius:50%; transition:.25s; }
+.toggle input:checked + .tslider { background:rgba(0,229,160,.22); border-color:rgba(0,229,160,.4); }
+.toggle input:checked + .tslider:before { background:#00E5A0; transform:translateX(18px); }
+
+/* BIKE */
+.bikehero { background:linear-gradient(135deg,rgba(255,184,48,.14),rgba(0,229,160,.08)); border:1px solid rgba(255,184,48,.25); border-radius:18px; padding:18px; margin-bottom:12px; }
+.bikestats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+.bikestat { text-align:center; }
+.bikeval { font-size:19px; font-weight:800; color:#FFB830; }
+.bikelbl { font-size:10px; color:#6B7799; margin-top:2px; }
+.zonebar { margin-bottom:10px; }
+.zonetop { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">FitPulse</div>
+  <div class="streak-pill">🔥 <span id="sc">12</span> Tage</div>
+</div>
+
+<!-- PAGES -->
+<div id="tabs">
+
+<!-- HOME -->
+<div class="tab on" id="t-home">
+  <div style="margin:8px 0 14px;">
+    <div style="font-size:12px;color:#6B7799;">Guten Morgen,</div>
+    <div style="font-size:24px;font-weight:800;" id="uname">Athlet 👋</div>
+  </div>
+
+  <div class="coach">
+    <div class="coach-head">
+      <div class="coach-av">🤖</div>
+      <div><div class="coach-name">Coach Viktor</div><div class="coach-role">KI Fitness Coach</div></div>
+      <div class="coach-dot"></div>
+    </div>
+    <div class="coach-msg" id="cmsg">Heute steht Kraft-Training + Erholungsfahrt auf dem Plan. Trinke 2.5L Wasser. 💪🚴</div>
+  </div>
+
+  <div class="stitle">❤️ Apple Health</div>
+  <div class="g2">
+    <div class="hcard"><div class="hval cg" id="h-steps">–</div><div class="hlbl">👟 Schritte</div><div class="bar"><div class="barfill" id="pb-steps" style="width:0%;background:#00E5A0;"></div></div></div>
+    <div class="hcard"><div class="hval cr" id="h-kcal">–</div><div class="hlbl">🔥 Kcal</div><div class="bar"><div class="barfill" id="pb-kcal" style="width:0%;background:#FF5F6D;"></div></div></div>
+    <div class="hcard"><div class="hval cb" id="h-speed">– km/h</div><div class="hlbl">🚴 Tempo</div><div class="bar"><div class="barfill" id="pb-speed" style="width:0%;background:#4FC3F7;"></div></div></div>
+    <div class="hcard"><div class="hval cp" id="h-hr">–</div><div class="hlbl">❤️ Puls</div><div class="bar"><div class="barfill" id="pb-hr" style="width:0%;background:#7C6FFF;"></div></div></div>
+    <div class="hcard"><div class="hval cb" id="h-dist">– m</div><div class="hlbl">📍 Distanz</div><div class="bar"><div class="barfill" id="pb-dist" style="width:0%;background:#4FC3F7;"></div></div></div>
+    <div class="hcard"><div class="hval cg" id="h-move">– m/s²</div><div class="hlbl">📱 Bewegung</div><div class="bar"><div class="barfill" id="pb-move" style="width:0%;background:#00E5A0;"></div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="stitle" style="margin-bottom:8px;">🔥 Woche</div>
+    <div class="weekrow" id="weekstrip"></div>
+    <div style="font-size:11px;color:#6B7799;">🟢 Training &nbsp;🟣 Ruhetag &nbsp;⬛ Geplant</div>
+  </div>
+
+  <div id="sensorBanner" class="card" style="background:rgba(0,229,160,.08);border-color:rgba(0,229,160,.2);display:flex;justify-content:space-between;align-items:center;">
+    <div><div style="font-weight:700;font-size:14px;">📱 Sensoren aktivieren</div><div style="font-size:12px;color:#6B7799;">GPS & Bewegung freigeben</div></div>
+    <button class="btnstart" onclick="startSensors()">Erlauben</button>
+  </div>
+
+  <div class="stitle">💥 Heute</div>
+  <div class="todaycard">
+    <div><div style="font-size:18px;font-weight:700;">Oberkörper Push</div><div style="font-size:12px;color:#6B7799;margin-top:3px;">45 Min · 4 Übungen</div></div>
+    <button class="btnstart" onclick="startWO('push')">▶ Start</button>
+  </div>
+
+  <div class="g2">
+    <div class="card" style="text-align:center;padding:14px;"><div style="font-size:26px;font-weight:800;" class="cg" id="monthc">23</div><div style="font-size:11px;color:#6B7799;">🏋️ Trainings/Mo</div></div>
+    <div class="card" style="text-align:center;padding:14px;"><div style="font-size:26px;font-weight:800;" class="cp" id="totalkm">147 km</div><div style="font-size:11px;color:#6B7799;">🚴 Rad gesamt</div></div>
+  </div>
+</div>
+
+<!-- TRAINING -->
+<div class="tab" id="t-training">
+  <div style="font-size:24px;font-weight:800;margin:4px 0 16px;">Training 🏋️</div>
+  <div style="display:flex;gap:7px;overflow-x:auto;margin-bottom:13px;padding-bottom:4px;" id="filterrow">
+    <button class="badge" style="background:rgba(0,229,160,.15);color:#00E5A0;border:1px solid #00E5A0;padding:7px 14px;border-radius:20px;font-family:inherit;" onclick="filterEx(this,'all')">Alle</button>
+    <button class="badge" style="background:#161C28;color:#6B7799;border:1px solid rgba(255,255,255,0.07);padding:7px 14px;border-radius:20px;font-family:inherit;" onclick="filterEx(this,'kraft')">💪 Kraft</button>
+    <button class="badge" style="background:#161C28;color:#6B7799;border:1px solid rgba(255,255,255,0.07);padding:7px 14px;border-radius:20px;font-family:inherit;" onclick="filterEx(this,'cardio')">🏃 Cardio</button>
+    <button class="badge" style="background:#161C28;color:#6B7799;border:1px solid rgba(255,255,255,0.07);padding:7px 14px;border-radius:20px;font-family:inherit;" onclick="filterEx(this,'rad')">🚴 Rad</button>
+    <button class="badge" style="background:#161C28;color:#6B7799;border:1px solid rgba(255,255,255,0.07);padding:7px 14px;border-radius:20px;font-family:inherit;" onclick="filterEx(this,'yoga')">🧘 Mobilität</button>
+  </div>
+  <div id="exlist"></div>
+  <button class="btnout" style="width:100%;margin-top:6px;" onclick="showModal('addmod')">+ Eigene Übung</button>
+</div>
+
+<!-- RAD -->
+<div class="tab" id="t-rad">
+  <div style="font-size:24px;font-weight:800;margin:4px 0 16px;">Radfahren 🚴</div>
+  <div class="bikehero">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:17px;font-weight:800;">Live Ride</div>
+      <span class="badge bg-a ca" id="ridebadge">Bereit</span>
+    </div>
+    <div class="bikestats">
+      <div class="bikestat"><div class="bikeval" id="rs-spd">0.0</div><div class="bikelbl">km/h</div></div>
+      <div class="bikestat"><div class="bikeval" id="rs-dist">0.00</div><div class="bikelbl">km</div></div>
+      <div class="bikestat"><div class="bikeval" id="rs-time">00:00</div><div class="bikelbl">Zeit</div></div>
+      <div class="bikestat"><div class="bikeval" id="rs-kcal">0</div><div class="bikelbl">Kcal</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn" style="margin:0;" id="ridebtn" onclick="toggleRide()">🚴 Ride starten</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stitle">🎯 HF-Zonen</div>
+    <div id="zonelist"></div>
+  </div>
+
+  <div class="stitle">🚴 Rad-Variationen</div>
+  <div id="radlist"></div>
+</div>
+
+<!-- ESSEN -->
+<div class="tab" id="t-food">
+  <div style="font-size:24px;font-weight:800;margin:4px 0 16px;">Ernährung 🥗</div>
+  <div class="card" style="display:flex;gap:16px;align-items:center;">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle cx="45" cy="45" r="34" fill="none" stroke="#161C28" stroke-width="8"/>
+      <circle cx="45" cy="45" r="34" fill="none" stroke="#00E5A0" stroke-width="8" stroke-dasharray="107 107" stroke-dashoffset="29" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+      <circle cx="45" cy="45" r="34" fill="none" stroke="#7C6FFF" stroke-width="8" stroke-dasharray="50 164" stroke-dashoffset="-78" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+      <circle cx="45" cy="45" r="34" fill="none" stroke="#FF5F6D" stroke-width="8" stroke-dasharray="38 176" stroke-dashoffset="-128" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+      <text x="45" y="48" text-anchor="middle" fill="#EFF3FF" font-size="13" font-weight="700" font-family="-apple-system">1840</text>
+      <text x="45" y="59" text-anchor="middle" fill="#6B7799" font-size="9" font-family="-apple-system">Kcal</text>
+    </svg>
+    <div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:7px;"><div style="width:9px;height:9px;border-radius:50%;background:#00E5A0;"></div><span style="font-size:13px;">Protein <strong>145g</strong></span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:7px;"><div style="width:9px;height:9px;border-radius:50%;background:#7C6FFF;"></div><span style="font-size:13px;">Carbs <strong>200g</strong></span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><div style="width:9px;height:9px;border-radius:50%;background:#FF5F6D;"></div><span style="font-size:13px;">Fett <strong>60g</strong></span></div>
+    </div>
+  </div>
+  <div id="meallist"></div>
+</div>
+
+<!-- COACH -->
+<div class="tab" id="t-coach">
+  <div style="font-size:24px;font-weight:800;margin:4px 0 16px;">Coach Viktor 🤖</div>
+  <div class="coach">
+    <div class="coach-head">
+      <div class="coach-av">🤖</div>
+      <div><div class="coach-name">Coach Viktor</div><div class="coach-role">KI Fitness Coach</div></div>
+      <div class="coach-dot"></div>
+    </div>
+    <div class="coach-msg" id="cmsg2">Perfekte Woche! Heute: Push-Training + Erholungsfahrt für die Regeneration. 🏆</div>
+  </div>
+  <div class="card" id="weekplan"></div>
+  <div class="stitle">💡 Coach-Tipps</div>
+  <div id="tips"></div>
+  <div class="card">
+    <div class="stitle" style="margin-bottom:4px;">🔥 30-Tage Streak</div>
+    <div style="font-size:12px;color:#6B7799;margin-bottom:10px;">Jetzt: <strong class="cg" id="s2">12</strong> · Rekord: <strong class="cr" id="srec">28</strong></div>
+    <div class="sgrid" id="sgrid"></div>
+  </div>
+</div>
+
+<!-- PROFIL -->
+<div class="tab" id="t-profil">
+  <div style="font-size:24px;font-weight:800;margin:4px 0 16px;">Einstellungen ⚙️</div>
+  <div class="card">
+    <div class="stitle" style="font-size:15px;">👤 Profil</div>
+    <div class="setrow"><div><div class="setlbl">Name</div></div><input class="setinput" id="sname" value="Athlet" onchange="saveS()"></div>
+    <div class="setrow"><div><div class="setlbl">Alter</div><div class="setsub" id="aged">28 J.</div></div><input type="number" class="setnum" id="sage" value="28" min="14" max="90" onchange="updateAge(this.value)"></div>
+    <div class="setrow"><div><div class="setlbl">Gewicht (kg)</div></div><input type="number" class="setnum" id="sweight" value="78"></div>
+    <div class="setrow" style="border:none;"><div><div class="setlbl">Ziel</div></div>
+      <select class="setinput" id="sgoal"><option>Muskelaufbau</option><option>Gewichtsverlust</option><option>Ausdauer</option><option>Radfahren</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stitle" style="font-size:15px;">🏋️ Training</div>
+    <div class="setrow"><div><div class="setlbl">Trainingstage/Wo</div><div class="setsub" id="ddisp">4 Tage</div></div><input type="range" min="2" max="7" value="4" oninput="document.getElementById('ddisp').textContent=this.value+' Tage'" style="width:100px;"></div>
+    <div class="setrow" style="border:none;"><div><div class="setlbl">Rad/Wo</div><div class="setsub" id="rdisp">2 Einh.</div></div><input type="range" min="1" max="6" value="2" oninput="document.getElementById('rdisp').textContent=this.value+' Einh.'" style="width:100px;"></div>
+  </div>
+  <div class="card">
+    <div class="stitle" style="font-size:15px;">📱 Sensoren</div>
+    <div class="setrow"><div><div class="setlbl">GPS / Tempo</div></div><label class="toggle"><input type="checkbox" checked id="tgps"><span class="tslider"></span></label></div>
+    <div class="setrow" style="border:none;"><div><div class="setlbl">Bewegungssensor</div></div><label class="toggle"><input type="checkbox" checked id="tmot"><span class="tslider"></span></label></div>
+  </div>
+  <button class="btn" onclick="startSensors()">🔄 Sensoren verbinden</button>
+</div>
+
+</div><!-- /tabs -->
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="bitem on" id="n-home" onclick="goTab('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>
+    Home
+  </button>
+  <button class="bitem" id="n-training" onclick="goTab('training')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3M6 8h12M6 16h12"/></svg>
+    Training
+  </button>
+  <button class="bitem" id="n-rad" onclick="goTab('rad')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="16" r="4"/><circle cx="6" cy="16" r="4"/><path d="M6 16l4-8 3 5 2-3 2 3"/><path d="M12 8l2-4h3"/></svg>
+    Rad
+  </button>
+  <button class="bitem" id="n-food" onclick="goTab('food')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><path d="M5 3v18M19 3v18"/></svg>
+    Essen
+  </button>
+  <button class="bitem" id="n-coach" onclick="goTab('coach')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>
+    Coach
+  </button>
+  <button class="bitem" id="n-profil" onclick="goTab('profil')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    Profil
+  </button>
+</div>
+
+<!-- WORKOUT OVERLAY -->
+<div class="wolay" id="wolay">
+  <div class="wohead">
+    <button class="wox" onclick="endWO()">✕</button>
+    <div class="wotitle" id="wotitle">Training</div>
+    <span class="badge bg-g cg" id="wobadge">Kraft</span>
+  </div>
+  <div class="ringwrap">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/>
+      <circle cx="60" cy="60" r="50" fill="none" stroke="#00E5A0" stroke-width="6" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" id="woring" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear;"/>
+    </svg>
+    <div class="ringcenter">
+      <div class="wotime" id="wotime">00:00</div>
+      <div class="wophase" id="wophase">Los geht's!</div>
+    </div>
+  </div>
+  <div class="wolive">
+    <div class="wolstat"><div class="wolval cg" id="wl-hr">–</div><div class="wollbl">❤️ Puls</div></div>
+    <div class="wolstat"><div class="wolval ca" id="wl-steps">–</div><div class="wollbl">👟 Schritte</div></div>
+    <div class="wolstat"><div class="wolval cb" id="wl-kcal">0</div><div class="wollbl">🔥 Kcal</div></div>
+  </div>
+  <div class="wolist" id="wolist"></div>
+  <div class="wobtns">
+    <button class="wobprev" onclick="woPrev()">← Zurück</button>
+    <button class="wobnext" onclick="woNext()">Weiter →</button>
+  </div>
+</div>
+
+<!-- EXERCISE DETAIL MODAL -->
+<div class="modal" id="exmod">
+  <div class="modbox">
+    <div class="modhandle"></div>
+    <div class="modtitle" id="exmod-title"></div>
+    <div id="exmod-meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <div class="flabel">SÄTZE</div>
+    <div class="card2" style="font-weight:600;font-size:15px;margin-bottom:12px;" id="exmod-sets"></div>
+    <div class="flabel">AUSFÜHRUNG</div>
+    <div class="card2" style="font-size:13px;line-height:1.7;margin-bottom:14px;" id="exmod-desc"></div>
+    <button class="btn" style="margin:0;" onclick="startFromDetail()">▶ Übung starten</button>
+    <button class="btnout" style="width:100%;margin-top:8px;" onclick="closeModal('exmod')">Schließen</button>
+  </div>
+</div>
+
+<!-- ADD EXERCISE MODAL -->
+<div class="modal" id="addmod">
+  <div class="modbox">
+    <div class="modhandle"></div>
+    <div class="modtitle">➕ Eigene Übung</div>
+    <label class="flabel">Name</label>
+    <input class="finput" id="newname" placeholder="z.B. Bulgarian Split Squat">
+    <label class="flabel">Kategorie</label>
+    <select class="finput" id="newcat">
+      <option value="kraft">💪 Kraft</option>
+      <option value="cardio">🏃 Cardio</option>
+      <option value="rad">🚴 Radfahren</option>
+      <option value="yoga">🧘 Mobilität</option>
+    </select>
+    <label class="flabel">Sätze / Zeit</label>
+    <input class="finput" id="newsets" placeholder="z.B. 4 × 10">
+    <label class="flabel">Beschreibung</label>
+    <textarea class="finput" id="newdesc" rows="3" placeholder="Ausführungstipps…" style="resize:none;"></textarea>
+    <button class="btn" style="margin:0;" onclick="saveEx()">Speichern</button>
+  </div>
+</div>
+
+<!-- DONE MODAL -->
+<div class="modal" id="donemod">
+  <div class="modbox" style="text-align:center;">
+    <div class="modhandle"></div>
+    <div style="font-size:60px;margin:8px 0 4px;">🏆</div>
+    <div class="modtitle" style="text-align:center;">Training abgeschlossen!</div>
+    <div class="donegrid" id="donegrid"></div>
+    <button class="btn" style="margin:0;" onclick="closeModal('donemod')">Super! Weiter 💪</button>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───
+const EX = [
+  {id:'kb',cat:'kraft',icon:'🏋️',bg:'bg-g',name:'Bankdrücken',sets:'4 × 8–10',w:'80 kg',muscles:'Brust · Schulter · Trizeps',badge:'badge bg-g cg',bt:'Kraft',desc:'Lege dich flach auf die Bank. Stange schulterbreit greifen. Kontrolliert zur Brust absenken, explosiv drücken.',sn:4,rn:10,rest:90},
+  {id:'ks',cat:'kraft',icon:'🦵',bg:'bg-p',name:'Kniebeugen',sets:'4 × 10–12',w:'70 kg',muscles:'Quads · Gesäß · Rücken',badge:'badge bg-p cp',bt:'Kraft',desc:'Füße schulterbreit, Rücken gerade, tief bis 90°. Aus der Hüfte antreiben.',sn:4,rn:10,rest:90},
+  {id:'kk',cat:'kraft',icon:'🔝',bg:'bg-r',name:'Klimmzüge',sets:'3 × max',w:'BW',muscles:'Rücken · Bizeps',badge:'badge bg-r cr',bt:'Kraft',desc:'Volle Streckung unten. Kinn über die Stange. Schulterblätter zusammenziehen.',sn:3,rn:8,rest:120},
+  {id:'ksd',cat:'kraft',icon:'🦾',bg:'bg-g',name:'Schulterdrücken',sets:'4 × 10',w:'60 kg',muscles:'Schulter · Trizeps',badge:'badge bg-g cg',bt:'Kraft',desc:'Von Schulter explosiv drücken. Kern angespannt. Kontrolliert absenken.',sn:4,rn:10,rest:90},
+  {id:'kd',cat:'kraft',icon:'💪',bg:'bg-r',name:'Dips',sets:'3 × max',w:'BW',muscles:'Brust · Trizeps',badge:'badge bg-r cr',bt:'Kraft',desc:'Körper nach vorne neigen für Brust. Kontrolliert absenken, explosiv hoch.',sn:3,rn:10,rest:90},
+  {id:'cl',cat:'cardio',icon:'🏃',bg:'bg-b',name:'Laufen',sets:'30 Min',w:'–',muscles:'Herz · Ausdauer',badge:'badge bg-b cb',bt:'Cardio',desc:'Puls 130–150 BPM. Gleichmäßiges Tempo. Aufrecht laufen.',sn:1,rn:0,rest:0,isTime:true,dur:30},
+  {id:'ch',cat:'cardio',icon:'⚡',bg:'bg-r',name:'HIIT Intervalle',sets:'8 × 20s',w:'–',muscles:'Ganzkörper',badge:'badge bg-r cr',bt:'Cardio',desc:'20s Vollgas / 10s Pause – 8 Runden. Burpees, Jumping Jacks, Mountain Climbers.',sn:8,rn:0,rest:10,isHIIT:true,work:20},
+  {id:'re',cat:'rad',icon:'🚴',bg:'bg-b',name:'Erholungsfahrt',sets:'30–45 Min',w:'–',muscles:'Beine · Kreislauf',badge:'badge bg-b cb',bt:'Leicht',desc:'Niedriger Widerstand, 80–90 RPM. Puls unter 130 BPM. Aktive Regeneration.',sn:1,rn:0,rest:0,isTime:true,dur:40},
+  {id:'rg',cat:'rad',icon:'🚵',bg:'bg-g',name:'Grundlagenausdauer',sets:'90 Min',w:'–',muscles:'Herz · Ausdauer',badge:'badge bg-g cg',bt:'Mittel',desc:'Zone 2: Puls 130–145 BPM, 160–200 W. Kadenz 85–95 RPM.',sn:1,rn:0,rest:0,isTime:true,dur:90},
+  {id:'ri',cat:'rad',icon:'⚡',bg:'bg-r',name:'Intervall Rad',sets:'5 × 5 Min',w:'FTP 95%',muscles:'Beine · VO₂max',badge:'badge bg-r cr',bt:'Rad HIIT',desc:'5 × 5 Min Zone 4–5. 5 Min Pause zwischen Intervallen.',sn:5,rn:0,rest:300,isTime:true,dur:5},
+  {id:'rb',cat:'rad',icon:'⛰️',bg:'bg-p',name:'Bergfahrt',sets:'40 Min',w:'–',muscles:'Quads · Kraft',badge:'badge bg-p cp',bt:'Rad Berg',desc:'Hoher Widerstand, 60–70 RPM. Puls Zone 4. Stehend abwechselnd mit Sitzen.',sn:1,rn:0,rest:0,isTime:true,dur:40},
+  {id:'rt',cat:'rad',icon:'🌀',bg:'bg-a',name:'Spinning Tabata',sets:'8 × 20s',w:'Max Watt',muscles:'Ganzkörper',badge:'badge bg-a ca',bt:'Tabata',desc:'8 × 20s Vollgas / 10s Pause. Max Watt. Steigert Laktattoleranz.',sn:8,rn:0,rest:10,isHIIT:true,work:20},
+  {id:'rtem',cat:'rad',icon:'🏁',bg:'bg-b',name:'Tempo Ride',sets:'50 Min',w:'FTP 88%',muscles:'Ausdauer · FTP',badge:'badge bg-b cb',bt:'Tempo',desc:'Konstant 85–95% FTP. Puls Zone 3–4. Kadenz 90 RPM.',sn:1,rn:0,rest:0,isTime:true,dur:50},
+  {id:'rend',cat:'rad',icon:'🌅',bg:'bg-g',name:'Endurance Ride',sets:'2–3 Std',w:'–',muscles:'Ausdauer · Mental',badge:'badge bg-g cg',bt:'Lang',desc:'Z2–Z3. Alle 45 Min Kohlenhydrate. Fettverbrennung maximieren.',sn:1,rn:0,rest:0,isTime:true,dur:120},
+  {id:'rka',cat:'rad',icon:'💪',bg:'bg-r',name:'Kraft-Ausdauer',sets:'3 × 10 Min',w:'55 RPM',muscles:'Beine · Kraft',badge:'badge bg-r cr',bt:'Kraft-Rad',desc:'Hoher Gang, 50–60 RPM, Zone 3–4. 3 × 10 Min mit 5 Min locker.',sn:3,rn:0,rest:300,isTime:true,dur:10},
+  {id:'rschwelle',cat:'rad',icon:'🎯',bg:'bg-a',name:'Schwellentraining',sets:'50 Min',w:'FTP 90%',muscles:'VO₂max · FTP',badge:'badge bg-a ca',bt:'Intensiv',desc:'88–95% FTP konstant. Puls Zone 4. Verbessert anaerobe Schwelle.',sn:1,rn:0,rest:0,isTime:true,dur:50},
+  {id:'yf',cat:'yoga',icon:'🧘',bg:'bg-p',name:'Yoga Flow',sets:'40 Min',w:'–',muscles:'Mobilität · Entspannung',badge:'badge bg-p cp',bt:'Mobilität',desc:'Langsam atmen. Jeden Stretch 30–60s halten. Hüftöffner und Rückenstrecker.',sn:1,rn:0,rest:0,isTime:true,dur:40},
+];
+
+const WORKOUTS = {
+  push:{name:'Oberkörper Push',badge:'Kraft',ids:['kb','ksd','kd','kk']},
+  legs:{name:'Beine & Rücken',badge:'Kraft',ids:['ks','kk','yf']},
+  hiit:{name:'HIIT Cardio',badge:'Cardio',ids:['ch','cl']},
+  erholung:{name:'Erholungsfahrt',badge:'🚴 Rad',ids:['re','yf']},
+  intervalrad:{name:'Intervall Rad',badge:'Rad HIIT',ids:['ri','rtem']},
+  endurance:{name:'Endurance Ride',badge:'🚵 Lang',ids:['rend']},
+};
+
+const WEEK = [
+  {day:'Montag',lbl:'Brust & Trizeps',bt:'Kraft',wid:'push'},
+  {day:'Dienstag',lbl:'Grundlagenausdauer Rad',bt:'🚴 Rad',wid:'erholung'},
+  {day:'Mittwoch',lbl:'Rücken & Bizeps',bt:'Kraft',wid:'legs'},
+  {day:'Donnerstag',lbl:'Erholungsfahrt + Yoga',bt:'Pause',wid:'erholung'},
+  {day:'Freitag',lbl:'Schulter & Beine',bt:'Kraft',wid:'legs'},
+  {day:'Samstag',lbl:'Intervall Rad / HIIT',bt:'🚴 Rad',wid:'intervalrad'},
+  {day:'Sonntag',lbl:'Endurance Ride / Ruhe',bt:'🚵 Lang',wid:'endurance'},
+];
+
+const MEALS = [
+  {time:'🌅 Frühstück',items:[
+    {e:'🥣',n:'Protein-Haferflocken',k:420,p:32,c:55,f:8},
+    {e:'🥛',n:'Proteinshake mit Beeren',k:180,p:24,c:18,f:2},
+  ]},
+  {time:'☀️ Mittagessen',items:[
+    {e:'🍗',n:'Hähnchen · Quinoa · Gemüse',k:580,p:48,c:62,f:14},
+    {e:'🥗',n:'Thunfisch-Avocado-Salat',k:390,p:35,c:18,f:22},
+  ]},
+  {time:'🚴 Rad-Spezial',items:[
+    {e:'🍝',n:'Pasta (2h vor Ride)',k:650,p:28,c:95,f:12,note:'Kohlenhydrate laden'},
+    {e:'🍌',n:'Banane während Ride',k:90,p:1,c:22,f:0,note:'Alle 45 Min'},
+  ]},
+  {time:'🌙 Abendessen',items:[
+    {e:'🥩',n:'Lachs mit Süßkartoffel',k:520,p:42,c:48,f:18},
+  ]},
+  {time:'🍎 Snacks',items:[
+    {e:'🥜',n:'Mandeln & Joghurt',k:280,p:18,c:12,f:16},
+  ]},
+];
+
+const ZONES = [
+  {n:'Z1 · Erholung',bpm:'< 115',col:'#4FC3F7',w:20,min:0,max:114},
+  {n:'Z2 · Grundlage',bpm:'115–130',col:'#00E5A0',w:38,min:115,max:130},
+  {n:'Z3 · Aerob',bpm:'130–148',col:'#FFB830',w:58,min:131,max:148},
+  {n:'Z4 · Schwelle',bpm:'148–165',col:'#FF5F6D',w:78,min:149,max:165},
+  {n:'Z5 · VO₂max',bpm:'> 165',col:'#FF3B30',w:95,min:166,max:999},
+];
+
+const TIPS = [
+  {av:'🏋️',role:'Krafttraining',msg:'Bankdrücken verbessert! Heute progressive Überlastung: +2.5 kg. Technik sauber halten. 🏆'},
+  {av:'🚴',role:'Radfahren',msg:'Kadenz zu niedrig – versuche 85–92 RPM. Schont Knie und steigert Effizienz. 🎯'},
+  {av:'🥗',role:'Ernährung',msg:'Vor langen Rides: Pasta 2h vorher. Während des Rides alle 45 Min Kohlenhydrate. 🍌'},
+];
+
+// ─── STATE ───
+let S = {
+  streak: +localStorage.getItem('fp_streak')||12,
+  record: +localStorage.getItem('fp_record')||28,
+  month:  +localStorage.getItem('fp_month')||23,
+  km:     +localStorage.getItem('fp_km')||147.4,
+  name:   localStorage.getItem('fp_name')||'Athlet',
+  age:    +localStorage.getItem('fp_age')||28,
+  custom: JSON.parse(localStorage.getItem('fp_custom')||'[]'),
+};
+
+// sensor state
+let steps=0, hr=72, speed=0, dist=0, kcal=0, accel=0;
+let gpsWatch=null, lastPos=null, motionHandler=null, stepTime=0;
+// workout state
+let WO=null, woTimer=null;
+// ride state
+let rideOn=false, rideSec=0, rideTimer=null;
+let curExModal=null;
+
+// ─── INIT ───
+window.onload = ()=>{
+  renderAll();
+  // Auto-start on Android/Desktop (no permission dialog needed)
+  if(window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission !== 'function'){
+    startMotion();
+    // Also try GPS silently
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        lastPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
+        startGPS();
+      }, ()=>{}, {timeout:5000, enableHighAccuracy:true});
+    }
+    document.getElementById('sensorBanner').style.display='none';
+  }
+  // On iOS: keep banner visible so user can tap to allow
+  // Banner button calls startSensors() which triggers iOS permission dialog
+};
+
+function renderAll(){
+  document.getElementById('uname').textContent = S.name+' 👋';
+  document.getElementById('sc').textContent = S.streak;
+  document.getElementById('s2').textContent = S.streak;
+  document.getElementById('srec').textContent = S.record;
+  document.getElementById('monthc').textContent = S.month;
+  document.getElementById('totalkm').textContent = S.km.toFixed(0)+' km';
+  document.getElementById('sname').value = S.name;
+  document.getElementById('sage').value = S.age;
+  document.getElementById('aged').textContent = S.age+' J.';
+  renderCoachMsg();
+  renderWeek();
+  renderStreak();
+  renderExList();
+  renderRadList();
+  renderZones();
+  renderMeals();
+  renderWeekPlan();
+  renderTips();
+}
+
+// ─── TABS ───
+function goTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.bitem').forEach(b=>b.classList.remove('on'));
+  document.getElementById('t-'+name).classList.add('on');
+  document.getElementById('n-'+name).classList.add('on');
+  window.scrollTo(0,0);
+}
+
+// ─── SENSORS (GPS + SCHRITTZÄHLER) ───
+
+// Step detection state
+let stepMags = [], stepLast = 0, stepPeak = false;
+// GPS smoothing
+let speedHistory = [], lastGPSTime = 0;
+
+async function startSensors(){
+  const banner = document.getElementById('sensorBanner');
+  banner.innerHTML = '<div style="font-weight:700;font-size:14px;">⏳ Verbinde Sensoren…</div>';
+
+  let motionOK = false, gpsOK = false;
+
+  // ── MOTION (iOS 13+ needs explicit permission) ──
+  if(typeof DeviceMotionEvent !== 'undefined'){
+    if(typeof DeviceMotionEvent.requestPermission === 'function'){
+      try {
+        const r = await DeviceMotionEvent.requestPermission();
+        if(r === 'granted'){ startMotion(); motionOK = true; }
+      } catch(e){ console.warn('Motion permission error:', e); }
+    } else {
+      // Android / Desktop – no permission needed
+      startMotion(); motionOK = true;
+    }
+  }
+
+  // ── GPS ──
+  if(navigator.geolocation){
+    try {
+      await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(pos => {
+          lastPos = {lat:pos.coords.latitude, lon:pos.coords.longitude};
+          gpsOK = true; resolve();
+        }, reject, {timeout:8000, enableHighAccuracy:true});
+      });
+      startGPS(); gpsOK = true;
+    } catch(e){ console.warn('GPS error:', e); }
+  }
+
+  // ── Wake Lock (keeps screen on during workout) ──
+  if('wakeLock' in navigator){
+    try { await navigator.wakeLock.request('screen'); } catch(e){}
+  }
+
+  // Update banner
+  if(motionOK || gpsOK){
+    banner.innerHTML = `<div style="color:#00E5A0;font-weight:700;font-size:14px;">✅ Sensoren aktiv! ${motionOK?'📱 Schritte':''} ${gpsOK?'📍 GPS':''}`;
+    setTimeout(()=>{ banner.style.display='none'; }, 2500);
+  } else {
+    banner.innerHTML = '<div style="color:#FF5F6D;font-weight:700;font-size:14px;">⚠️ Keine Sensoren verfügbar</div>';
+  }
+}
+
+function startMotion(){
+  if(motionHandler) return;
+
+  // Better step detection using low-pass filter + threshold
+  let gravity = {x:0, y:0, z:9.8};
+  let lastStepMag = 0;
+  let stepCooldown = false;
+
+  motionHandler = e => {
+    const a = e.accelerationIncludingGravity;
+    if(!a || (a.x==null && a.y==null && a.z==null)) return;
+
+    const ax = a.x||0, ay = a.y||0, az = a.z||0;
+
+    // Low-pass filter to isolate gravity
+    const alpha = 0.8;
+    gravity.x = alpha * gravity.x + (1-alpha) * ax;
+    gravity.y = alpha * gravity.y + (1-alpha) * ay;
+    gravity.z = alpha * gravity.z + (1-alpha) * az;
+
+    // High-pass to get movement only
+    const lx = ax - gravity.x;
+    const ly = ay - gravity.y;
+    const lz = az - gravity.z;
+    const mag = Math.sqrt(lx*lx + ly*ly + lz*lz);
+
+    accel = +mag.toFixed(2);
+    document.getElementById('pb-move').style.width = Math.min(100, mag/15*100)+'%';
+    document.getElementById('h-move').textContent = accel+' m/s²';
+
+    // Step detection: rising edge above threshold, min 300ms between steps
+    const THRESH = 2.5;
+    const now = Date.now();
+    if(mag > THRESH && lastStepMag <= THRESH && !stepCooldown && now - stepLast > 300){
+      steps++;
+      stepLast = now;
+      stepCooldown = true;
+      setTimeout(()=>{ stepCooldown=false; }, 300);
+
+      // Estimate HR from step cadence (walking ~100bpm, running ~160bpm)
+      const interval = now - (stepLast || now - 600);
+      const stepsPerMin = 60000 / Math.max(100, interval);
+      if(stepsPerMin > 50 && stepsPerMin < 300){
+        hr = Math.round(Math.min(190, Math.max(60, 50 + stepsPerMin * 0.65)));
+      }
+
+      // Estimate kcal from steps (avg 70kg person: ~0.04 kcal/step walking, 0.07 running)
+      const isRunning = stepsPerMin > 150;
+      kcal = Math.round(steps * (isRunning ? 0.07 : 0.04));
+
+      updateHealthUI();
+    }
+    lastStepMag = mag;
+  };
+  window.addEventListener('devicemotion', motionHandler, {passive:true});
+}
+
+function startGPS(){
+  if(gpsWatch !== null) return;
+  let lastGoodPos = null;
+
+  gpsWatch = navigator.geolocation.watchPosition(pos => {
+    const now = Date.now();
+    const rawSpeed = pos.coords.speed;
+    const acc = pos.coords.accuracy || 999;
+
+    // Filter out bad GPS readings (accuracy worse than 50m)
+    if(acc > 50) return;
+
+    // Speed: use GPS speed if available, else calculate from positions
+    if(rawSpeed !== null && rawSpeed >= 0){
+      const kmh = rawSpeed * 3.6;
+      speedHistory.push(kmh);
+      if(speedHistory.length > 5) speedHistory.shift();
+      // Rolling average to smooth speed
+      speed = speedHistory.reduce((a,b)=>a+b,0) / speedHistory.length;
+    }
+
+    if(lastPos && lastGoodPos){
+      const timeDiff = (now - lastGPSTime) / 1000; // seconds
+      if(timeDiff > 0.5){ // only update if at least 0.5s passed
+        const d = haversine(lastPos.lat, lastPos.lon, pos.coords.latitude, pos.coords.longitude);
+        // Sanity check: max 200km/h = 55m/s
+        if(d / timeDiff < 55){
+          dist += d;
+        }
+      }
+    }
+
+    lastPos = {lat: pos.coords.latitude, lon: pos.coords.longitude};
+    lastGoodPos = pos;
+    lastGPSTime = now;
+
+    // Update ride page live stats
+    document.getElementById('rs-spd').textContent = speed.toFixed(1);
+    document.getElementById('rs-dist').textContent = (dist/1000).toFixed(2);
+    document.getElementById('h-speed').textContent = speed.toFixed(1)+' km/h';
+    document.getElementById('pb-speed').style.width = Math.min(100, speed/50*100)+'%';
+    document.getElementById('h-dist').textContent = dist>=1000 ? (dist/1000).toFixed(2)+' km' : Math.round(dist)+' m';
+    document.getElementById('pb-dist').style.width = Math.min(100, dist/5000*100)+'%';
+
+  }, err => {
+    console.warn('GPS watch error:', err.message);
+  }, {enableHighAccuracy:true, maximumAge:1000, timeout:10000});
+}
+
+function stopGPS(){
+  if(gpsWatch !== null){
+    navigator.geolocation.clearWatch(gpsWatch);
+    gpsWatch = null;
+  }
+  speedHistory = [];
+  speed = 0;
+}
+
+function haversine(la1,lo1,la2,lo2){
+  const R=6371000, dL=(la2-la1)*Math.PI/180, dO=(lo2-lo1)*Math.PI/180;
+  const a = Math.sin(dL/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dO/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Auto-update health UI every second even without motion events
+setInterval(()=>{
+  document.getElementById('h-steps').textContent = steps.toLocaleString('de');
+  document.getElementById('pb-steps').style.width = Math.min(100, steps/100)+'%';
+  document.getElementById('h-hr').textContent = hr > 50 ? hr : '–';
+  document.getElementById('pb-hr').style.width = Math.min(100, (hr-40)/1.5)+'%';
+  document.getElementById('h-kcal').textContent = kcal;
+  document.getElementById('pb-kcal').style.width = Math.min(100, kcal/500*100)+'%';
+  document.getElementById('wl-hr').textContent = hr > 50 ? hr : '–';
+  document.getElementById('wl-steps').textContent = steps.toLocaleString('de');
+}, 1000);
+
+function updateHealthUI(){
+  document.getElementById('h-steps').textContent = steps.toLocaleString('de');
+  document.getElementById('pb-steps').style.width = Math.min(100,steps/100)+'%';
+  document.getElementById('h-hr').textContent = hr>50?hr:'–';
+  document.getElementById('pb-hr').style.width = Math.min(100,(hr-40)/1.4)+'%';
+  document.getElementById('h-speed').textContent = speed.toFixed(1)+' km/h';
+  document.getElementById('pb-speed').style.width = Math.min(100,speed/40*100)+'%';
+  document.getElementById('h-kcal').textContent = kcal;
+  document.getElementById('pb-kcal').style.width = Math.min(100,kcal/600*100)+'%';
+  const dm=Math.round(dist);
+  document.getElementById('h-dist').textContent = dm>=1000?(dist/1000).toFixed(2)+' km':dm+' m';
+  document.getElementById('pb-dist').style.width = Math.min(100,dm/50)+'%';
+  document.getElementById('h-move').textContent = accel+' m/s²';
+  document.getElementById('pb-move').style.width = Math.min(100,accel/20*100)+'%';
+  // workout live
+  document.getElementById('wl-hr').textContent = hr>50?hr:'–';
+  document.getElementById('wl-steps').textContent = steps.toLocaleString('de');
+}
+
+// ─── RIDE ───
+function toggleRide(){
+  if(!rideOn){
+    rideOn=true; rideSec=0; dist=0; speed=0;
+    document.getElementById('ridebtn').textContent='⏹ Stop';
+    document.getElementById('ridebadge').textContent='🔴 Live';
+    if(navigator.geolocation) startGPS();
+    rideTimer=setInterval(()=>{
+      rideSec++;
+      document.getElementById('rs-time').textContent=fmt(rideSec);
+      document.getElementById('rs-spd').textContent=speed.toFixed(1);
+      document.getElementById('rs-dist').textContent=(dist/1000).toFixed(2);
+      document.getElementById('rs-kcal').textContent=Math.round(rideSec/60*9);
+    },1000);
+  } else {
+    rideOn=false;
+    clearInterval(rideTimer);
+    stopGPS();
+    S.km += dist/1000;
+    localStorage.setItem('fp_km',S.km.toFixed(2));
+    document.getElementById('totalkm').textContent=S.km.toFixed(0)+' km';
+    document.getElementById('ridebtn').textContent='🚴 Ride starten';
+    document.getElementById('ridebadge').textContent='Bereit';
+  }
+}
+
+// ─── WORKOUT ───
+function startWO(wid){
+  const plan = WORKOUTS[wid]; if(!plan) return;
+  const allEx = [...EX,...S.custom];
+  const exs = plan.ids.map(id=>allEx.find(e=>e.id===id)).filter(Boolean);
+  if(!exs.length) return;
+  WO = {plan,exs,idx:0,set:1,phase:'work',elapsed:0,phaseEl:0,completedIds:new Set(),hiit:1,kcal:0,isHIIT:false};
+  document.getElementById('wotitle').textContent = plan.name;
+  document.getElementById('wobadge').textContent = plan.badge;
+  renderWOList();
+  document.getElementById('wolay').classList.add('on');
+  if(woTimer) clearInterval(woTimer);
+  woTimer=setInterval(tickWO,1000);
+}
+
+function startFromDetail(){
+  closeModal('exmod');
+  if(!curExModal) return;
+  const wid='_solo_'+curExModal.id;
+  if(!WORKOUTS[wid]) WORKOUTS[wid]={name:curExModal.name,badge:curExModal.bt,ids:[curExModal.id]};
+  setTimeout(()=>startWO(wid),300);
+}
+
+function tickWO(){
+  if(!WO) return;
+  WO.elapsed++; WO.phaseEl++;
+  const rate = WO.exs[WO.idx]?.cat==='rad'?9:WO.exs[WO.idx]?.cat==='cardio'?8:6;
+  WO.kcal = Math.round(WO.elapsed/60*rate);
+  if(WO.phase==='rest'){
+    const rs=WO.exs[WO.idx]?.rest||60;
+    if(WO.phaseEl>=rs){WO.phase='work';WO.phaseEl=0;}
+  }
+  document.getElementById('wotime').textContent=fmt(WO.elapsed);
+  document.getElementById('wophase').textContent=phaseLabel();
+  document.getElementById('wl-kcal').textContent=WO.kcal;
+  const prog=ringProg();
+  document.getElementById('woring').style.strokeDashoffset=Math.max(0,314-(prog*314));
+  document.getElementById('woring').style.stroke=WO.phase==='rest'?'#FF5F6D':'#00E5A0';
+}
+
+function phaseLabel(){
+  if(!WO) return '';
+  const ex=WO.exs[WO.idx]; if(!ex) return 'Fertig! 🎉';
+  if(WO.phase==='rest') return '⏳ Pause – noch '+(Math.max(0,(ex.rest||60)-WO.phaseEl))+'s';
+  if(ex.isHIIT) return 'Runde '+WO.hiit+' / '+ex.sn+' – '+(ex.work||20)+'s';
+  if(ex.isTime) return 'Einheit '+WO.set+' / '+(ex.sn||1);
+  return 'Satz '+WO.set+' / '+ex.sn+' · '+ex.rn+' Wdh';
+}
+
+function ringProg(){
+  if(!WO) return 0;
+  const ex=WO.exs[WO.idx]; if(!ex) return 1;
+  if(WO.phase==='rest') return Math.min(1,WO.phaseEl/(ex.rest||60));
+  if(ex.isHIIT) return Math.min(1,WO.phaseEl/(ex.work||20));
+  if(ex.isTime) return Math.min(1,WO.phaseEl/((ex.dur||1)*60));
+  return (WO.set-1)/ex.sn;
+}
+
+function woNext(){
+  if(!WO) return;
+  const ex=WO.exs[WO.idx]; if(!ex) return;
+  if(ex.isHIIT){
+    if(WO.phase==='work'){
+      if(WO.hiit>=ex.sn) completeEx();
+      else{WO.phase='rest';WO.phaseEl=0;WO.hiit++;}
+    } else {WO.phase='work';WO.phaseEl=0;}
+  } else if(ex.isTime){ completeEx(); }
+  else {
+    if(WO.set>=ex.sn) completeEx();
+    else{WO.set++;WO.phase='rest';WO.phaseEl=0;}
+  }
+  renderWOList();
+}
+
+function woPrev(){
+  if(!WO||WO.idx<=0) return;
+  WO.completedIds.delete(WO.exs[WO.idx-1].id);
+  WO.idx--; WO.set=1; WO.phase='work'; WO.phaseEl=0; WO.hiit=1;
+  renderWOList();
+}
+
+function completeEx(){
+  if(!WO) return;
+  const ex=WO.exs[WO.idx]; if(ex) WO.completedIds.add(ex.id);
+  WO.idx++;WO.set=1;WO.phase='work';WO.phaseEl=0;WO.hiit=1;
+  if(WO.idx>=WO.exs.length){
+    clearInterval(woTimer);
+    document.getElementById('wolay').classList.remove('on');
+    doneWO();
+  }
+}
+
+function doneWO(){
+  const today=new Date().toDateString();
+  const key='fp_td_'+today;
+  if(!localStorage.getItem(key)){
+    S.streak++; if(S.streak>S.record) S.record=S.streak;
+    S.month++;
+    localStorage.setItem(key,'1');
+    localStorage.setItem('fp_streak',S.streak);
+    localStorage.setItem('fp_record',S.record);
+    localStorage.setItem('fp_month',S.month);
+    document.getElementById('sc').textContent=S.streak;
+    document.getElementById('s2').textContent=S.streak;
+    document.getElementById('srec').textContent=S.record;
+    document.getElementById('monthc').textContent=S.month;
+    renderStreak();
+  }
+  const dg=document.getElementById('donegrid');
+  dg.innerHTML=`
+    <div class="donestat"><div class="donenum cg">${fmt(WO.elapsed)}</div><div style="font-size:11px;color:#6B7799;">⏱ Dauer</div></div>
+    <div class="donestat"><div class="donenum cr">${WO.kcal}</div><div style="font-size:11px;color:#6B7799;">🔥 Kcal</div></div>
+    <div class="donestat"><div class="donenum cp">${WO.completedIds.size}</div><div style="font-size:11px;color:#6B7799;">✅ Übungen</div></div>
+    <div class="donestat"><div class="donenum ca">${S.streak}</div><div style="font-size:11px;color:#6B7799;">🔥 Streak</div></div>`;
+  showModal('donemod');
+  const msg=`🏆 ${WO.plan.name} fertig! ${fmt(WO.elapsed)} · ${WO.kcal} Kcal · Streak: ${S.streak} Tage!`;
+  document.getElementById('cmsg').textContent=msg;
+  document.getElementById('cmsg2').textContent=msg;
+}
+
+function endWO(){
+  clearInterval(woTimer);
+  document.getElementById('wolay').classList.remove('on');
+}
+
+function renderWOList(){
+  if(!WO) return;
+  const el=document.getElementById('wolist');
+  el.innerHTML=WO.exs.map((ex,i)=>`
+    <div class="woexrow ${i===WO.idx?'cur':WO.completedIds.has(ex.id)?'done':''}">
+      <div class="wonum">${WO.completedIds.has(ex.id)?'✓':i+1}</div>
+      <div style="flex:1;"><div style="font-weight:600;font-size:14px;">${ex.name}</div><div style="font-size:11px;color:#6B7799;">${ex.sets}${ex.w&&ex.w!=='–'?' · '+ex.w:''}</div></div>
+      <div style="font-size:18px;">${WO.completedIds.has(ex.id)?'✅':i===WO.idx?'▶️':'⬜'}</div>
+    </div>`).join('');
+}
+
+// ─── RENDER FUNCTIONS ───
+function renderCoachMsg(){
+  const h=new Date().getHours();
+  const g=h<12?'Guten Morgen':h<18?'Guten Nachmittag':'Guten Abend';
+  let m;
+  if(S.age<20) m=g+'! Fokus auf Technik. Beim Radfahren: Trittfrequenz vor Kraft! 🚴';
+  else if(S.age<35) m=g+'! Peak-Phase! Push-Training + Erholungsfahrt. 2.5L Wasser! 💪🚴';
+  else if(S.age<50) m=g+'! Zone-2 Radfahren heute – Puls 130–145 BPM. Erholung ist Key! 🎯';
+  else m=g+'! Sanftes Radfahren + Kraft. Kadenz über 85 RPM halten! ❤️';
+  document.getElementById('cmsg').textContent=m;
+  document.getElementById('cmsg2').textContent=m;
+}
+
+function renderWeek(){
+  const el=document.getElementById('weekstrip');
+  const days=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const today=new Date();
+  el.innerHTML='';
+  for(let i=-3;i<=3;i++){
+    const d=new Date(today); d.setDate(today.getDate()+i);
+    const p=document.createElement('div');
+    p.className='daypill'+(i<0?' done':i===0?' today':i%3===0?' rest':'');
+    p.innerHTML=`<div class="dn">${days[d.getDay()]}</div><div class="dd">${d.getDate()}</div><div class="dot"></div>`;
+    el.appendChild(p);
+  }
+}
+
+function renderStreak(){
+  const g=document.getElementById('sgrid'); g.innerHTML='';
+  for(let i=0;i<30;i++){
+    const d=document.createElement('div');
+    d.className='sday'+(i<S.streak-1?' done':i===S.streak-1?' today':i%7===6?' rest':'');
+    g.appendChild(d);
+  }
+}
+
+function renderExList(){
+  const el=document.getElementById('exlist');
+  const allEx=[...EX,...S.custom];
+  el.innerHTML=allEx.map(ex=>exRowHTML(ex)).join('');
+}
+
+function exRowHTML(ex){
+  return `<div class="exrow" data-cat="${ex.cat}" onclick="openExDetail('${ex.id}')">
+    <div class="exicon ${ex.bg}">${ex.icon}</div>
+    <div style="flex:1;"><div class="exname">${ex.name}</div><div class="exmeta">${ex.sets}${ex.w&&ex.w!=='–'?' · '+ex.w:''}</div></div>
+    <span class="${ex.badge}" style="padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;">${ex.bt}</span>
+  </div>`;
+}
+
+function renderRadList(){
+  const radIds=['re','rg','rschwelle','ri','rb','rt','rend','rka'];
+  document.getElementById('radlist').innerHTML=radIds.map(id=>{
+    const ex=EX.find(e=>e.id===id); return ex?exRowHTML(ex):'';
+  }).join('');
+}
+
+function renderZones(){
+  document.getElementById('zonelist').innerHTML=ZONES.map((z,i)=>`
+    <div class="zonebar" id="zr${i}">
+      <div class="zonetop">
+        <span style="font-size:13px;font-weight:600;">${z.n}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:#6B7799;">${z.bpm} BPM</span>
+          <span id="znow${i}" style="display:none;background:${z.col}22;color:${z.col};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">● Jetzt</span>
+        </div>
+      </div>
+      <div class="bar"><div class="barfill" style="width:${z.w}%;background:${z.col};"></div></div>
+    </div>`).join('');
+}
+
+function renderMeals(){
+  document.getElementById('meallist').innerHTML=MEALS.map(g=>`
+    <div class="stitle" style="margin-top:4px;">${g.time}</div>
+    ${g.items.map(m=>`<div class="mealcard">
+      <div class="mealemoji">${m.e}</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:14px;">${m.n}</div>
+        <div style="font-size:11px;color:#00E5A0;margin-top:2px;">${m.k} kcal${m.note?' · '+m.note:''}</div>
+        <div class="mealpills"><span class="mpill">💪 ${m.p}g</span><span class="mpill">🌾 ${m.c}g</span><span class="mpill">🥑 ${m.f}g</span></div>
+      </div>
+    </div>`).join('')}`).join('');
+}
+
+function renderWeekPlan(){
+  const days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const today=days[new Date().getDay()];
+  document.getElementById('weekplan').innerHTML='<div class="stitle" style="margin-bottom:10px;">📅 Wochenplan</div>'+
+    WEEK.map(d=>`<div class="planday" style="${d.day===today?'border-color:#00E5A020;background:rgba(0,229,160,.04);':''}">
+      <div><div style="font-weight:600;font-size:14px;">${d.day}${d.day===today?' <span style="color:#00E5A0;font-size:12px;">· Heute</span>':''}</div><div style="font-size:12px;color:#6B7799;margin-top:2px;">${d.lbl}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="badge bg-g cg" style="padding:3px 9px;border-radius:20px;">${d.bt}</span>
+        <button class="btnplay" onclick="startWO('${d.wid}')">▶</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderTips(){
+  document.getElementById('tips').innerHTML=TIPS.map(t=>`
+    <div class="coach" style="margin-bottom:10px;">
+      <div class="coach-head">
+        <div class="coach-av" style="font-size:18px;">${t.av}</div>
+        <div><div class="coach-name">Coach Viktor</div><div class="coach-role">${t.role}</div></div>
+      </div>
+      <div class="coach-msg">${t.msg}</div>
+    </div>`).join('');
+}
+
+// ─── FILTER ───
+function filterEx(btn,cat){
+  document.querySelectorAll('#filterrow button').forEach(b=>{
+    b.style.background='#161C28'; b.style.color='#6B7799'; b.style.borderColor='rgba(255,255,255,0.07)';
+  });
+  btn.style.background='rgba(0,229,160,.15)'; btn.style.color='#00E5A0'; btn.style.borderColor='#00E5A0';
+  document.querySelectorAll('#exlist .exrow').forEach(r=>{
+    r.style.display=(cat==='all'||r.dataset.cat===cat)?'flex':'none';
+  });
+}
+
+// ─── EXERCISE DETAIL ───
+function openExDetail(id){
+  const allEx=[...EX,...S.custom];
+  const ex=allEx.find(e=>e.id===id); if(!ex) return;
+  curExModal=ex;
+  document.getElementById('exmod-title').textContent=ex.name;
+  document.getElementById('exmod-meta').innerHTML=ex.muscles.split('·').map(m=>`<span style="background:#161C28;color:#6B7799;font-size:11px;padding:3px 10px;border-radius:20px;">${m.trim()}</span>`).join('');
+  document.getElementById('exmod-sets').textContent=ex.sets+(ex.w&&ex.w!=='–'?' · '+ex.w:'');
+  document.getElementById('exmod-desc').textContent=ex.desc||'';
+  showModal('exmod');
+}
+
+// ─── ADD EXERCISE ───
+function saveEx(){
+  const name=document.getElementById('newname').value.trim(); if(!name) return;
+  const cat=document.getElementById('newcat').value;
+  const sets=document.getElementById('newsets').value.trim()||'3 × 10';
+  const desc=document.getElementById('newdesc').value.trim();
+  const icons={kraft:'🏋️',cardio:'🏃',rad:'🚴',yoga:'🧘'};
+  const bgs={kraft:'bg-g',cardio:'bg-b',rad:'bg-a',yoga:'bg-p'};
+  const badges={kraft:'badge bg-g cg',cardio:'badge bg-b cb',rad:'badge bg-a ca',yoga:'badge bg-p cp'};
+  const bts={kraft:'Kraft',cardio:'Cardio',rad:'Rad',yoga:'Mobilität'};
+  const ex={id:'c_'+Date.now(),cat,icon:icons[cat],bg:bgs[cat],name,sets,w:'–',muscles:cat,badge:badges[cat],bt:bts[cat],desc,sn:3,rn:10,rest:60};
+  S.custom.push(ex);
+  localStorage.setItem('fp_custom',JSON.stringify(S.custom));
+  document.getElementById('exlist').insertAdjacentHTML('beforeend',exRowHTML(ex));
+  ['newname','newsets','newdesc'].forEach(id=>document.getElementById(id).value='');
+  closeModal('addmod');
+}
+
+// ─── SETTINGS ───
+function saveS(){
+  S.name=document.getElementById('sname').value;
+  localStorage.setItem('fp_name',S.name);
+  document.getElementById('uname').textContent=S.name+' 👋';
+}
+function updateAge(v){
+  S.age=+v; localStorage.setItem('fp_age',S.age);
+  document.getElementById('aged').textContent=S.age+' J.';
+  renderCoachMsg();
+}
+
+// ─── MODALS ───
+function showModal(id){ document.getElementById(id).classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('on'); });
+});
+
+// ─── UTILS ───
+function fmt(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+</script>
+</body>
+</html>
